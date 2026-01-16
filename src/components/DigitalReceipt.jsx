@@ -5,6 +5,7 @@ import { ID } from "appwrite";
 import Script from "next/script";
 
 const SECTIONS = ["(A+)", "(A)", "(B)", "2up/Tor"];
+const TYPE_OPTIONS = ["3/16", "6/10", "10/20", "20/40", "40/60", "80/100"];
 
 export default function DigitalReceipt() {
   const [form, setForm] = useState({
@@ -151,17 +152,18 @@ export default function DigitalReceipt() {
 
   const handleExportExcel = () => {
     const headers = [
-      "Date",
-      "Type",
+      "No",
+      "Sizes",
       "Section",
       "Weight",
       "Rate",
-      "Total",
+      "Amount",
       "Customer Name",
     ];
+    let counter = 1;
     const csv = items
       .map((item) => [
-        item.itemDate,
+        counter++,
         item.commodityType,
         item.section,
         item.weight,
@@ -221,11 +223,8 @@ export default function DigitalReceipt() {
     rows: items.filter((i) => i.section === sec),
   })).filter((g) => g.rows.length > 0);
 
-  const formatDate = (dateStr) => {
-    if (!dateStr) return "";
-    const d = new Date(dateStr);
-    return `${d.getDate()}/${d.getMonth() + 1}`;
-  };
+  // Replaced formatDate with just a pass-through or unused
+  // const formatDate = (dateStr) => ... (Removed/Unused)
 
   // INLINE STYLES FOR PDF SAFETY
   const styles = {
@@ -369,33 +368,31 @@ export default function DigitalReceipt() {
                 ))}
               </select>
             </div>
+
+            {/* Removed Date Input from UI as per 'remove the create it data type' request */}
+
             <div>
               <label className="text-xs font-bold text-slate-400 uppercase">
-                Date
+               SIZES
               </label>
               <input
-                type="date"
-                className="glass-input date-input w-full rounded-lg p-3 outline-none focus:border-cyan-500"
-                value={form.itemDate}
-                onChange={(e) => handleFormChange("itemDate", e.target.value)}
-              />
-            </div>
-            <div>
-              <label className="text-xs font-bold text-slate-400 uppercase">
-                Type / Qty
-              </label>
-              <input
+                list="type-options"
                 type="text"
                 className="glass-input w-full rounded-lg p-3 outline-none focus:border-cyan-500"
-                placeholder="e.g. 3/6 or 4"
+                placeholder="Select or Type..."
                 value={form.itemLabel}
                 onChange={(e) => handleFormChange("itemLabel", e.target.value)}
               />
+              <datalist id="type-options">
+                {TYPE_OPTIONS.map((opt) => (
+                  <option key={opt} value={opt} />
+                ))}
+              </datalist>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-xs font-bold text-slate-400 uppercase">
-                  Qty / Wt
+                  Weight
                 </label>
                 <input
                   type="number"
@@ -478,10 +475,11 @@ export default function DigitalReceipt() {
 
           {/* Table Header */}
           <div style={styles.tableHeader}>
-            <div style={{ width: "20%" }}>Date</div>
-            <div style={{ width: "40%" }}>Type / Qty</div>
-            <div style={{ width: "20%", textAlign: "center" }}>Rate</div>
-            <div style={{ width: "20%", textAlign: "right" }}>Total</div>
+            <div style={{ width: "10%" }}>NO.</div>
+            <div style={{ width: "30%" }}>SIZES</div>
+            <div style={{ width: "20%", textAlign: "center" }}>WEIGHT</div>
+            <div style={{ width: "20%", textAlign: "center" }}>RATE</div>
+            <div style={{ width: "20%", textAlign: "right" }}>AMOUNT</div>
           </div>
 
           {/* Items */}
@@ -491,31 +489,18 @@ export default function DigitalReceipt() {
             return (
               <div key={group.title} style={{ marginBottom: "20px" }}>
                 <div style={styles.sectionTitle}>{group.title}</div>
-                {group.rows.map((item) => (
+                {group.rows.map((item, idx) => (
                   <div key={item.id} style={styles.row}>
                     <div
-                      style={{ width: "20%", fontSize: "12px", color: "#555" }}
+                      style={{ width: "10%", fontSize: "12px", color: "#555" }}
                     >
-                      {formatDate(item.itemDate)}
+                      {idx + 1}
                     </div>
-                    <div style={{ width: "40%", fontWeight: "500" }}>
-                      {/* Merged Display: Weight if >0, else Type (Pieces) */}
-                      {item.weight > 0 ? (
-                        <span>
-                          {/* Use Type as label if it's not just a number */}
-                          {item.commodityType &&
-                          isNaN(parseFloat(item.commodityType))
-                            ? `${item.commodityType} `
-                            : ""}
-                          <span style={{ fontWeight: "bold" }}>
-                            {item.weight}
-                          </span>
-                        </span>
-                      ) : (
-                        <span style={{ fontWeight: "bold" }}>
-                          {item.commodityType}
-                        </span>
-                      )}
+                    <div style={{ width: "30%", fontWeight: "500" }}>
+                      {item.commodityType}
+                    </div>
+                    <div style={{ width: "20%", textAlign: "center" }}>
+                      {item.weight > 0 ? item.weight : "-"}
                     </div>
                     <div style={{ width: "20%", textAlign: "center" }}>
                       {item.rate || "-"}
@@ -532,10 +517,22 @@ export default function DigitalReceipt() {
                   </div>
                 ))}
                 <div style={styles.sectionSummary}>
-                  <div style={{ width: "60%" }}>TOTAL</div>
                   <div
                     style={{
                       width: "40%",
+                      textAlign: "right",
+                      paddingRight: "10px",
+                    }}
+                  >
+                    TOTAL
+                  </div>
+                  <div style={{ width: "20%", textAlign: "center" }}>
+                    {groupWeight > 0 ? groupWeight.toFixed(3) : ""}
+                  </div>
+                  <div style={{ width: "20%" }}></div>
+                  <div
+                    style={{
+                      width: "20%",
                       textAlign: "right",
                       fontSize: "18px",
                     }}
