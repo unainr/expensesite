@@ -1,10 +1,22 @@
 import { Client, Account, Databases } from "appwrite";
 
-const client = new Client()
-  .setEndpoint(process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT)
-  .setProject(process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID);
+export const client = new Client();
 
-const account = new Account(client);
-const databases = new Databases(client);
+const endpoint =
+  process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT || "https://cloud.appwrite.io/v1";
+const projectId = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID;
 
-export { client, account, databases };
+if (projectId) {
+  client.setEndpoint(endpoint).setProject(projectId);
+}
+
+export const account = new Account(client);
+export const databases = new Databases(client);
+
+// No storage export needed if we aren't using images
+// export const storage = new Storage(client);
+
+export const APPWRITE_CONFIG = {
+  databaseId: process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID || "ExpenseDB",
+  collectionId: process.env.NEXT_PUBLIC_APPWRITE_COLLECTION_ID || "Expenses",
+};
